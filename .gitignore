@@ -1,0 +1,56 @@
+# =================================================================
+# STM32CubeMX + VS Code 프로젝트 표준 .gitignore (Cross-Platform)
+# =================================================================
+
+# --- 빌드 결과물 (Build Artifacts) ---
+# 컴파일러가 생성하는 바이너리 파일은 OS나 로컬 환경에 따라 다르므로 제외합니다.
+Build/
+build/
+Debug/
+Release/
+bin/
+obj/
+
+# 펌웨어 결과물
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+
+# --- STM32CubeMX 관련 ---
+# .ioc 파일은 반드시 포함해야 하며, 아래는 툴이 생성하는 임시/로그 파일입니다.
+*.log
+*.printf
+.mxproject
+
+# --- VS Code 설정 (Editor Settings) ---
+.vscode/ipch/                # 인텔리센스(IntelliSense) 캐시 폴더 (매우 큼)
+.vscode/browse.vc.db        # C++ 심볼 데이터베이스
+.vscode/project.gui.json    # 로컬 GUI 설정
+
+# [중요] 팀원과 공유할 설정에 따른 선택:
+# 1. 팀원 모두 동일한 확장을 써서 빌드/디버깅 환경을 맞춘다면 아래 3개는 커밋에 포함(주석 해제)하세요.
+# 2. 각자 경로(컴파일러 위치 등)가 다르다면 제외하는 것이 좋습니다.
+# .vscode/launch.json       # 디버그 설정 (개인 디버거 경로 포함 시 제외)
+# .vscode/tasks.json        # 빌드 작업 설정
+# .vscode/settings.json     # 에디터 개인 설정
+
+# --- 컴파일러 및 툴체인 부산물 ---
+*.o
+*.d
+*.su
+*.crf
+*.htm
+*.dep
+
+# --- OS 관련 임시 파일 (Windows/macOS 혼용 시 필수) ---
+.DS_Store                   # macOS 폴더 메타데이터
+Thumbs.db                   # Windows 미리보기 데이터베이스
+desktop.ini                 # Windows 폴더 설정
+
+# --- 기타 환경 설정 ---
+.cache/                     # 빌드 시스템 캐시
+node_modules/               # 만약 관련 스크립트가 있을 경우
+*.tmp
+*.temp
