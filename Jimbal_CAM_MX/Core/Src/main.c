@@ -18,13 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "lcd.h"
+#include "ap.h"
 
 /* USER CODE END Includes */
 
@@ -47,15 +48,11 @@
 
 /* USER CODE BEGIN PV */
 
-uint16_t targetX = 120;  // X의 초기 가로 위치
-uint16_t targetY = 160;  // Y의 초기 세로 위치
-uint16_t oldX = 120;     // (선택) 이전 위치 저장용
-uint16_t oldY = 160;     // (선택) 이전 위치 저장용
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -97,36 +94,22 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  LCD_Init();
- LCD_FillScreen(BLUE);
+  apInit();
   /* USER CODE END 2 */
+
+  /* Init scheduler */
+  osKernelInitialize();  /* Call init function for freertos objects (in cmsis_os2.c) */
+  MX_FREERTOS_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint16_t boxSize = 20;
   while (1)
   {
-    // 1. 좌표 업데이트 (위로 1픽셀 이동)
-    targetY--; 
-    
-    // 화면 끝 처리
-    if (targetY < 5) {
-        LCD_FillScreen(BLUE); // 워프할 때만 전체 초기화
-        targetY = 300;
-    }
-
-    /* 2. [깜빡임 방지 핵심 로직] */
-    // 위로 이동 중이므로:
-    // (1) 네모의 맨 윗줄(새로운 영역)을 빨간색으로 한 줄 그린다.
-    LCD_DrawRect(targetX, targetY, boxSize, 1, RED);
-    
-    // (2) 네모가 방금 떠난 맨 아랫줄(이전 영역)을 파란색으로 한 줄 지운다.
-    // 현재 y로부터 20픽셀 떨어진 지점이 바로 방금 전 네모의 끝자락입니다.
-    LCD_DrawRect(targetX, targetY + boxSize, boxSize, 1, BLUE);
-
-    // 3. 속도 조절
-    HAL_Delay(5);
-
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -183,6 +166,28 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM10 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM10)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
