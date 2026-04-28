@@ -1,46 +1,60 @@
 #include "lcd.h"
-#include "my_spi.h"
-#include "my_gpio.h"
+#include "spi.h"  // MX_SPI1_Init에서 생성된 huart1 등을 사용하기 위해
 
+extern SPI_HandleTypeDef hspi1; // CubeMX에서 생성된 핸들 사용
+
+// 1. 명령어 전송 (HAL 방식)
 void LCD_SendCommand(uint8_t cmd) {
-    gpioPinWrite(LCD_CS_PORT, LCD_CS_PIN, 0);
-    gpioPinWrite(LCD_DC_PORT, LCD_DC_PIN, 0);
-    spiWriteByte(cmd);
-    gpioPinWrite(LCD_CS_PORT, LCD_CS_PIN, 1);
+    HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_RESET); // Command
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET); // CS Low
+    
+    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10); // HAL SPI 전송
+    
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);   // CS High
 }
 
+// 2. 데이터 전송 (HAL 방식)
 void LCD_SendData(uint8_t data) {
-    gpioPinWrite(LCD_CS_PORT, LCD_CS_PIN, 0);
-    gpioPinWrite(LCD_DC_PORT, LCD_DC_PIN, 1);
-    spiWriteByte(data);
-    gpioPinWrite(LCD_CS_PORT, LCD_CS_PIN, 1);
+    HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);   // Data
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET); // CS Low
+    
+    HAL_SPI_Transmit(&hspi1, &data, 1, 10); // HAL SPI 전송
+    
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);   // CS High
 }
 
 void LCD_Init(void) {
-    // 하드웨어 리셋
-    gpioPinWrite(LCD_RST_PORT, LCD_RST_PIN, 0);
+    // 3. 하드웨어 리셋 (HAL 방식)
+    HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_RESET);
     HAL_Delay(50);
-    gpioPinWrite(LCD_RST_PORT, LCD_RST_PIN, 1);
-    HAL_Delay(120);
+    HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_SET);
+    HAL_Delay(150);
 
     LCD_SendCommand(0x01); // Software Reset
-    HAL_Delay(100);
+    HAL_Delay(150);
 
-    // 전원 설정 (솔님 코드 설정 유지)
     LCD_SendCommand(0x3A); LCD_SendData(0x55); // 16-bit RGB
     LCD_SendCommand(0x36); LCD_SendData(0x48); // 방향 설정
-    LCD_SendCommand(0x11); HAL_Delay(120);    // Sleep Out
-    LCD_SendCommand(0x29); HAL_Delay(50);     // Display ON
+    LCD_SendCommand(0x11); HAL_Delay(150);     // Sleep Out
+    LCD_SendCommand(0x29); HAL_Delay(100);     // Display ON
 }
 
 void LCD_SetWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
     LCD_SendCommand(0x2A);
-    LCD_SendData(x0 >> 8); LCD_SendData(x0 & 0xFF);
-    LCD_SendData(x1 >> 8); LCD_SendData(x1 & 0xFF);
+    uint8_t x_data[] = {x0 >> 8, x0 & 0xFF, x1 >> 8, x1 & 0xFF};
+    HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
+    HAL_SPI_Transmit(&hspi1, x_data, 4, 10);
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
+
     LCD_SendCommand(0x2B);
-    LCD_SendData(y0 >> 8); LCD_SendData(y0 & 0xFF);
-    LCD_SendData(y1 >> 8); LCD_SendData(y1 & 0xFF);
-    LCD_SendCommand(0x2C);
+    uint8_t y_data[] = {y0 >> 8, y0 & 0xFF, y1 >> 8, y1 & 0xFF};
+    HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
+    HAL_SPI_Transmit(&hspi1, y_data, 4, 10);
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
+
+    LCD_SendCommand(0x2C); // RAM Write 시작 준비
 }
 
 void LCD_DrawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
@@ -48,14 +62,18 @@ void LCD_DrawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color
     if (y + h > 320) h = 320 - y;
 
     LCD_SetWindow(x, y, x + w - 1, y + h - 1);
-    gpioPinWrite(LCD_CS_PORT, LCD_CS_PIN, 0);
-    gpioPinWrite(LCD_DC_PORT, LCD_DC_PIN, 1);
 
+    HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
+
+    uint8_t color_buf[2] = {color >> 8, color & 0xFF};
     uint32_t total = (uint32_t)w * h;
+
     for (uint32_t i = 0; i < total; i++) {
-        spiWrite16(color); // 고속 레지스터 전송
+        HAL_SPI_Transmit(&hspi1, color_buf, 2, 10); // 픽셀 하나씩 HAL로 전송
     }
-    gpioPinWrite(LCD_CS_PORT, LCD_CS_PIN, 1);
+
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 }
 
 void LCD_FillScreen(uint16_t color) {
