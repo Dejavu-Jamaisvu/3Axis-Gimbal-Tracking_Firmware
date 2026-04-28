@@ -1,5 +1,5 @@
-#ifndef SPI_H_
-#define SPI_H_
+#ifndef MY_SPI_H_
+#define MY_SPI_H_
 #include "hw_def.h"
 
 void spiWriteByte(uint8_t data);

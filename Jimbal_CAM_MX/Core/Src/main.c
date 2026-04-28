@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "lcd.h"
+#include "ap.h"
 
 /* USER CODE END Includes */
 
@@ -44,13 +44,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-
 /* USER CODE BEGIN PV */
-
-uint16_t targetX = 120;  // X의 초기 가로 위치
-uint16_t targetY = 160;  // Y의 초기 세로 위치
-uint16_t oldX = 120;     // (선택) 이전 위치 저장용
-uint16_t oldY = 160;     // (선택) 이전 위치 저장용
 
 /* USER CODE END PV */
 
@@ -80,13 +74,13 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
+  SystemClock_Config();
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
-  SystemClock_Config();
+  
 
   /* USER CODE BEGIN SysInit */
 
@@ -97,36 +91,14 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
-  LCD_Init();
- LCD_FillScreen(BLUE);
+  apInit();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint16_t boxSize = 20;
   while (1)
   {
-    // 1. 좌표 업데이트 (위로 1픽셀 이동)
-    targetY--; 
-    
-    // 화면 끝 처리
-    if (targetY < 5) {
-        LCD_FillScreen(BLUE); // 워프할 때만 전체 초기화
-        targetY = 300;
-    }
-
-    /* 2. [깜빡임 방지 핵심 로직] */
-    // 위로 이동 중이므로:
-    // (1) 네모의 맨 윗줄(새로운 영역)을 빨간색으로 한 줄 그린다.
-    LCD_DrawRect(targetX, targetY, boxSize, 1, RED);
-    
-    // (2) 네모가 방금 떠난 맨 아랫줄(이전 영역)을 파란색으로 한 줄 지운다.
-    // 현재 y로부터 20픽셀 떨어진 지점이 바로 방금 전 네모의 끝자락입니다.
-    LCD_DrawRect(targetX, targetY + boxSize, boxSize, 1, BLUE);
-
-    // 3. 속도 조절
-    HAL_Delay(5);
-
+      apMain();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

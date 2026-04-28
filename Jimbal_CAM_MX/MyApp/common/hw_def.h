@@ -3,7 +3,7 @@
 
 #include "main.h"
 #include "stm32f411xe.h"
-#include "cmsis_os2.h"
+#include "def.h"
 
 // LCD 핀 설정 (솔님의 실제 연결: GPIOA)
 #define LCD_CS_PORT     GPIOA
