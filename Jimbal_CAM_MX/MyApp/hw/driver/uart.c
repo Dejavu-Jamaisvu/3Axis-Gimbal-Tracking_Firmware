@@ -14,7 +14,7 @@ bool uartInit(void) {
         uart_tx_mutex = osMutexNew(NULL);
     }
 
-    uartOpen(0, 9600); // 9600bps로 오픈
+    uartOpen(0, 115200); // 9600bps로 오픈
     
     // HAL 인터럽트 수신 시작
     HAL_UART_Receive_IT(&huart2, &rx_data, 1);
