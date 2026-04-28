@@ -95,7 +95,7 @@ int main(void)
   MX_SPI1_Init();
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
-  apInit();
+  //apInit();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -165,6 +165,14 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+#include <stdio.h>
+
+// printf가 호출되면 내부적으로 이 함수가 실행되어 UART2로 데이터를 전송합니다.
+int _write(int file, char *ptr, int len) {
+    extern UART_HandleTypeDef huart2; // main.c 위에 정의된 huart2를 가져옴
+    HAL_UART_Transmit(&huart2, (uint8_t*)ptr, len, HAL_MAX_DELAY);
+    return len;
+}
 
 /* USER CODE END 4 */
 

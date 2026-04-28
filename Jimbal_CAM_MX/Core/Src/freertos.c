@@ -19,6 +19,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "ap.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
@@ -114,11 +115,15 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
+  apInit();
+  for(;;) {
+    apMain();
   }
+  /* Infinite loop */
+  // for(;;)
+  // {
+  //   osDelay(1);
+  // }
   /* USER CODE END StartDefaultTask */
 }
 
