@@ -2,43 +2,36 @@
 #include "lcd.h"
 #include "uart.h"
 
-// 변수들을 일로 옮겼습니다.
+// 변수 초기화
 uint16_t targetX = 110;
 uint16_t targetY = 150;
 uint16_t boxSize = 20;
 
 void apInit(void) {
     uartInit();
-    LCD_Init();
-    LCD_FillScreen(BLUE);
+    LCD_Init();         // 1. LCD 초기 설정 (명령어 전송)
+    
+    HAL_Delay(10);      // 초기화 후 아주 잠깐 대기
+    
+    LCD_FillScreen(BLUE); // 2. 전체 배경을 파란색으로 채움
+    
+    HAL_Delay(10);      // 배경 채운 후 대기
+    
+    // 3. 테스트용: 빨간 네모를 정중앙에 고정해서 그리기
+    // 입력 없이도 이 코드가 실행되면 화면에 바로 떠야 합니다.
+    LCD_DrawRect(targetX, targetY, boxSize, boxSize, RED);
 }
 
 void apMain(void) {
+    // 키보드 조종 로직은 일단 주석 처리하거나 비워둡니다.
+    // 화면에 네모가 뜨는지 확인하는 것이 우선입니다!
+    
+    /*
     if (uartAvailable(0) > 0) 
     {
-        uint8_t rxChar = uartRead(0); 
-        
-        uint16_t oldX = targetX;
-        uint16_t oldY = targetY;
-
-        // 키보드 입력(WASD) 조종
-        if      (rxChar == 'w') targetY -= 3;
-        else if (rxChar == 's') targetY += 3;
-        else if (rxChar == 'a') targetX -= 3;
-        else if (rxChar == 'd') targetX += 3;
-
-        // 경계 체크
-        if (targetX < 1) targetX = 1;
-        if (targetX > 219) targetX = 219;
-        if (targetY < 1) targetY = 1;
-        if (targetY > 299) targetY = 299;
-
-        // 화면 업데이트
-        if (oldX != targetX || oldY != targetY) {
-            LCD_DrawRect(oldX, oldY, boxSize, boxSize, BLUE);
-            LCD_DrawRect(targetX, targetY, boxSize, boxSize, RED);
-        }
+        // ... (생략) ...
     }
-    // RTOS 딜레이
-    osDelay(1);
+    */
+    
+    osDelay(10); // 시스템 안정성을 위해 딜레이 유지
 }

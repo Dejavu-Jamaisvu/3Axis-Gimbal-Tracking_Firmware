@@ -1,5 +1,4 @@
 #include "uart.h"
-#include "cmsis_os2.h"
 
 extern UART_HandleTypeDef huart2;
 static osMessageQueueId_t uart_rx_q = NULL;
