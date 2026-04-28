@@ -1,14 +1,17 @@
 #include "lcd.h"
 #include "spi.h"  // MX_SPI1_Init에서 생성된 huart1 등을 사용하기 위해
 
-extern SPI_HandleTypeDef hspi1; // CubeMX에서 생성된 핸들 사용
+extern SPI_HandleTypeDef hspi1;
 
 // 1. 명령어 전송 (HAL 방식)
+// 테스트용 하이브리드 SendCommand
 void LCD_SendCommand(uint8_t cmd) {
     HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_RESET); // Command
     HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET); // CS Low
     
-    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10); // HAL SPI 전송
+    HAL_SPI_Transmit(&hspi1, &cmd, 1, 10);
+    // HAL 대신 레지스터 함수 사용
+    //spiWriteByte(cmd); 
     
     HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);   // CS High
 }

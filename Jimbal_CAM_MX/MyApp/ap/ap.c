@@ -13,7 +13,7 @@ void apInit(void) {
     
     HAL_Delay(10);      // 초기화 후 아주 잠깐 대기
     
-    LCD_FillScreen(BLUE); // 2. 전체 배경을 파란색으로 채움
+    LCD_FillScreen(WHITE); // 2. 전체 배경을 파란색으로 채움
     
     HAL_Delay(10);      // 배경 채운 후 대기
     
