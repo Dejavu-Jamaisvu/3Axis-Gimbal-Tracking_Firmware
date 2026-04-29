@@ -1,8 +1,13 @@
 #include "color_tracker.h"
 #include "esp_log.h"
+#include "driver/uart.h"
 #include <string.h>
 
 static const char *TAG = "CAM";
+
+#define UART_PORT  UART_NUM_2
+#define UART_TX    12
+#define UART_RX    13
 
 #define PWDN_GPIO_NUM   32
 #define RESET_GPIO_NUM  -1
@@ -21,8 +26,34 @@ static const char *TAG = "CAM";
 #define HREF_GPIO_NUM   23
 #define PCLK_GPIO_NUM   22
 
+void uart_send_result(TrackResult *r)
+{
+    uint8_t buf[7];
+    buf[0] = FRAME_STX;
+    buf[1] = (r->cx >> 8) & 0xFF;
+    buf[2] =  r->cx & 0xFF;
+    buf[3] = (r->cy >> 8) & 0xFF;
+    buf[4] =  r->cy & 0xFF;
+    buf[5] = r->detected ? 1 : 0;
+    buf[6] = FRAME_ETX;
+    uart_write_bytes(UART_PORT, (const char *)buf, 7);
+}
+
 bool colorTracker_init(void)
 {
+    // UART 초기화
+    uart_config_t uart_config = {
+        .baud_rate  = 115200,
+        .data_bits  = UART_DATA_8_BITS,
+        .parity     = UART_PARITY_DISABLE,
+        .stop_bits  = UART_STOP_BITS_1,
+        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
+    };
+    uart_param_config(UART_PORT, &uart_config);
+    uart_set_pin(UART_PORT, UART_TX, UART_RX, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_driver_install(UART_PORT, 256, 0, 0, NULL, 0);
+    ESP_LOGI(TAG, "UART2 초기화 완료 (TX=12, RX=13, 115200bps)");
+
     camera_config_t config;
     memset(&config, 0, sizeof(config));
 
@@ -150,6 +181,9 @@ TrackResult colorTracker_process(void)
         result.cy       = (int)(sum_y / count);
         result.area     = count;
     }
+
+    // 매 프레임마다 결과 송신
+    uart_send_result(&result);
 
     return result;
 }

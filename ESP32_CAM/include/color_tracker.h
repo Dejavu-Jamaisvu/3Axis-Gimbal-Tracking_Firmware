@@ -31,6 +31,7 @@ typedef struct {
     int  frame_h;
 } TrackResult;
 
+void uart_send_result(TrackResult *r);
 bool        colorTracker_init(void);
 TrackResult colorTracker_process(void);
 void        rgb565_to_hsv(uint16_t pixel, uint8_t *h, uint8_t *s, uint8_t *v);
