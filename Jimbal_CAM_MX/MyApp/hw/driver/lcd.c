@@ -82,3 +82,18 @@ void LCD_DrawRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color
 void LCD_FillScreen(uint16_t color) {
     LCD_DrawRect(0, 0, 240, 320, color);
 }
+
+void LCD_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data) {
+    // 1. 영상을 그릴 네모난 영역(Window) 설정
+    LCD_SetWindow(x, y, x + w - 1, y + h - 1);
+    
+    // 2. LCD에 데이터를 보낼 준비 (Data 모드, CS Low)
+    HAL_GPIO_WritePin(LCD_DC_PORT, LCD_DC_PIN, GPIO_PIN_SET);   
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET); 
+    
+    // 3. SPI1을 통해 배열에 담긴 영상 데이터를 전부 전송 (w * h * 2 바이트)
+    HAL_SPI_Transmit(&hspi1, data, w * h * 2, 1000);
+    
+    // 4. 전송 완료 후 CS High
+    HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);   
+}
