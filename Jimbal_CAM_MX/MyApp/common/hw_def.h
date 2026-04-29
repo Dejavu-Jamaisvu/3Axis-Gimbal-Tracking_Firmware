@@ -16,4 +16,7 @@
 #define LCD_RST_PORT    GPIOA
 #define LCD_RST_PIN     GPIO_PIN_9
 
-#endif
+#define LCD_WIDTH 240
+#define LCD_HEIGHT 320
+
+#endif // __HW_HW_DEF_H_    
