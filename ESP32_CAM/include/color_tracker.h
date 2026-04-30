@@ -19,9 +19,7 @@ extern "C" {
 
 #define MIN_DETECT_AREA  200
 
-#define FRAME_STX  0x02
-#define FRAME_ETX  0x03
-
+// SPI 전송 시 메모리를 유지하기 위해 구조체에 fb 포인터 추가
 typedef struct {
     bool detected;
     int  cx;
@@ -29,11 +27,13 @@ typedef struct {
     int  area;
     int  frame_w;
     int  frame_h;
+    camera_fb_t *fb; // 카메라 이미지 원본 데이터
 } TrackResult;
 
-void uart_send_result(TrackResult *r);
 bool        colorTracker_init(void);
 TrackResult colorTracker_process(void);
+void        colorTracker_free(TrackResult *r); // 전송 후 메모리 해제용
+
 void        rgb565_to_hsv(uint16_t pixel, uint8_t *h, uint8_t *s, uint8_t *v);
 
 #ifdef __cplusplus

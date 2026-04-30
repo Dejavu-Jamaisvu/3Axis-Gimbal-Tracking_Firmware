@@ -1,13 +1,8 @@
 #include "color_tracker.h"
 #include "esp_log.h"
-#include "driver/uart.h"
 #include <string.h>
 
 static const char *TAG = "CAM";
-
-#define UART_PORT  UART_NUM_2
-#define UART_TX    12
-#define UART_RX    13
 
 #define PWDN_GPIO_NUM   32
 #define RESET_GPIO_NUM  -1
@@ -26,34 +21,9 @@ static const char *TAG = "CAM";
 #define HREF_GPIO_NUM   23
 #define PCLK_GPIO_NUM   22
 
-void uart_send_result(TrackResult *r)
-{
-    uint8_t buf[7];
-    buf[0] = FRAME_STX;
-    buf[1] = (r->cx >> 8) & 0xFF;
-    buf[2] =  r->cx & 0xFF;
-    buf[3] = (r->cy >> 8) & 0xFF;
-    buf[4] =  r->cy & 0xFF;
-    buf[5] = r->detected ? 1 : 0;
-    buf[6] = FRAME_ETX;
-    uart_write_bytes(UART_PORT, (const char *)buf, 7);
-}
-
 bool colorTracker_init(void)
 {
-    // UART 초기화
-    uart_config_t uart_config = {
-        .baud_rate  = 115200,
-        .data_bits  = UART_DATA_8_BITS,
-        .parity     = UART_PARITY_DISABLE,
-        .stop_bits  = UART_STOP_BITS_1,
-        .flow_ctrl  = UART_HW_FLOWCTRL_DISABLE,
-    };
-    uart_param_config(UART_PORT, &uart_config);
-    uart_set_pin(UART_PORT, UART_TX, UART_RX, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(UART_PORT, 256, 0, 0, NULL, 0);
-    ESP_LOGI(TAG, "UART2 초기화 완료 (TX=12, RX=13, 115200bps)");
-
+    // 카메라 초기화
     camera_config_t config;
     memset(&config, 0, sizeof(config));
 
@@ -78,7 +48,7 @@ bool colorTracker_init(void)
 
     config.xclk_freq_hz = 20000000;
     config.pixel_format = PIXFORMAT_RGB565;
-    config.frame_size   = FRAMESIZE_QVGA;
+    config.frame_size   = FRAMESIZE_QVGA; // 320x240 해상도
     config.fb_count     = 1;
     config.grab_mode    = CAMERA_GRAB_WHEN_EMPTY;
     config.fb_location  = CAMERA_FB_IN_PSRAM;
@@ -141,15 +111,14 @@ TrackResult colorTracker_process(void)
 {
     TrackResult result;
     memset(&result, 0, sizeof(result));
-    result.frame_w = 320;
-    result.frame_h = 240;
-
+    
     camera_fb_t *fb = esp_camera_fb_get();
     if (!fb) {
         ESP_LOGE(TAG, "프레임 캡처 실패");
         return result;
     }
 
+    result.fb = fb; // 메인 루프에서 SPI로 전송하기 위해 포인터 저장!
     result.frame_w = (int)fb->width;
     result.frame_h = (int)fb->height;
 
@@ -173,8 +142,6 @@ TrackResult colorTracker_process(void)
         }
     }
 
-    esp_camera_fb_return(fb);
-
     if (count >= MIN_DETECT_AREA) {
         result.detected = true;
         result.cx       = (int)(sum_x / count);
@@ -182,8 +149,15 @@ TrackResult colorTracker_process(void)
         result.area     = count;
     }
 
-    // 매 프레임마다 결과 송신
-    uart_send_result(&result);
-
+    // 주의: 여기서 esp_camera_fb_return(fb)를 호출하면 안 됩니다! (SPI 전송 후 해제)
     return result;
+}
+
+// SPI 전송이 끝난 후 메모리를 비워주는 함수
+void colorTracker_free(TrackResult *r)
+{
+    if (r->fb) {
+        esp_camera_fb_return(r->fb);
+        r->fb = NULL;
+    }
 }
