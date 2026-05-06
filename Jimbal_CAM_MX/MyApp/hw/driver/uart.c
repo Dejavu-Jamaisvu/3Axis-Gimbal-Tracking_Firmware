@@ -22,7 +22,7 @@ bool uartInit(void) {
         track_mutex = osMutexNew(NULL);
 
     // huart6(ESP32 수신용) 인터럽트 시작
-    HAL_UART_Receive_IT(&huart6, &rx_6data, 1);
+    //HAL_UART_Receive_IT(&huart6, &rx_6data, 1);
     return true;
 }
 
