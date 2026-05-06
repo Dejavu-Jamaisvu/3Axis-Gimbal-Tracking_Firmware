@@ -103,4 +103,5 @@ void apMain(void) {
             oldY = objY;
         }
     }
+        printf("OK! detected: %s X: %d, Y: %d\r\n", detected ? "true" : "false", cx, cy);
 }
