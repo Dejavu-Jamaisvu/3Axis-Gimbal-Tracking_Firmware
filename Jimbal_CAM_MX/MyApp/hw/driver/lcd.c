@@ -165,6 +165,17 @@ void LCD_FillScreen(uint16_t color) {
     LCD_DrawRect(0, 0, LCD_WIDTH, LCD_HEIGHT, color);
 }
 
+void LCD_DrawHollowRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t thick, uint16_t color) {
+    // 윗변 (Top)
+    LCD_DrawRect(x, y, w, thick, color);
+    // 아랫변 (Bottom)
+    LCD_DrawRect(x, y + h - thick, w, thick, color);
+    // 왼쪽 변 (Left)
+    LCD_DrawRect(x, y, thick, h, color);
+    // 오른쪽 변 (Right)
+    LCD_DrawRect(x + w - thick, y, thick, h, color);
+}
+
 /* ── DrawImage: 영상 데이터 한 번에 전송 ──────────────── */
 void LCD_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data) {
     LCD_SetWindow(x, y, x + w - 1, y + h - 1);  // CS LOW 상태 반환
