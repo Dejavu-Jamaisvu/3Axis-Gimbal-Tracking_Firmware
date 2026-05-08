@@ -41,11 +41,11 @@ void loop()
     if (millis() - last_time < LOOP_INTERVAL_MS) return;
     last_time = millis();
 
-    // 1. 영상 캡처 및 좌표 계산
+    // 영상 캡처 및 좌표 계산
     TrackResult result = colorTracker_process();
 
     if (result.fb) {
-        // 2. SPI 통신 시작 (10MHz 속도로 설정)
+        // SPI 통신 시작 (10MHz 속도로 설정)
         hspi->beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0));
         digitalWrite(HSPI_CS, LOW); // STM32에게 "데이터 간다!" 신호 보냄
 
@@ -53,7 +53,7 @@ void loop()
         hspi->transfer(0xAA);
         hspi->transfer(0xBB);
 
-        // [패킷 2] 영상 데이터 통째로 전송 (엄청난 속도!)
+        // [패킷 2] 영상 데이터 통째로 전송
         hspi->writeBytes(result.fb->buf, result.fb->len);
 
         // [패킷 3] 추적된 좌표 데이터 전송
@@ -63,14 +63,14 @@ void loop()
         hspi->transfer(result.cy & 0xFF);
         hspi->transfer(result.detected ? 0x01 : 0x00);
 
-        // [패킷 4] 푸터 (전송 끝)
+        // [패킷 4] 푸터
         hspi->transfer(0xCC);
         hspi->transfer(0xDD);
 
         digitalWrite(HSPI_CS, HIGH); // 전송 종료
         hspi->endTransaction();
 
-        // 3. 사용이 끝난 프레임 메모리 반환 (매우 중요!)
+        // 사용이 끝난 프레임 메모리 반환
         colorTracker_free(&result);
     }
 
