@@ -34,7 +34,7 @@ void apInit(void) {
     LCD_Init();
     LCD_FillScreen(BLACK);
     uartInit();
-    printf("SPI Slave Ready!\r\n");
+    printf("SPI Slave !\r\n");
 
     // 첫 수신 시작 (rx_buf인 A 그릇에 받기 시작)
     HAL_SPI_Receive_DMA(&hspi2, rx_buf, PACKET_SIZE);
