@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>750</width>
-    <height>500</height>
+    <width>780</width>
+    <height>520</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>STM32 Dashboard</string>
+   <string>STM32 Gimbal &amp; IMU Dashboard</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -28,6 +28,9 @@
         <property name="text">
          <string>Connect</string>
         </property>
+        <property name="minimumHeight">
+         <number>40</number>
+        </property>
        </widget>
       </item>
       <item>
@@ -35,7 +38,7 @@
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
-        <property name="sizeHint" stdset="0">
+        <property name="sizeHint">
          <size>
           <width>20</width>
           <height>20</height>
@@ -46,7 +49,14 @@
       <item>
        <widget class="QPushButton" name="btnToggleImu">
         <property name="text">
-         <string>IMU ON (500ms)</string>
+         <string>IMU ON (100ms)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnToggleGim">
+        <property name="text">
+         <string>Gimbal ON</string>
         </property>
        </widget>
       </item>
@@ -54,13 +64,6 @@
        <widget class="QPushButton" name="btnToggleLed">
         <property name="text">
          <string>LED Toggle 1000</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnToggleGim">
-        <property name="text">
-         <string>GIM ON (500ms)</string>
         </property>
        </widget>
       </item>
@@ -76,13 +79,23 @@
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
-        <property name="sizeHint" stdset="0">
+        <property name="sizeHint">
          <size>
           <width>20</width>
-          <height>40</height>
+          <height>20</height>
          </size>
         </property>
        </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnToggleRaw">
+        <property name="text">
+         <string>Mode: MONITOR</string>
+        </property>
+        <property name="minimumHeight">
+         <number>35</number>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>
@@ -95,12 +108,18 @@
           <property name="text">
            <string>Roll: --</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
          </widget>
         </item>
         <item row="0" column="1">
          <widget class="QLabel" name="lblPitch">
           <property name="text">
            <string>Pitch: --</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -109,12 +128,18 @@
           <property name="text">
            <string>Yaw: --</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
          </widget>
         </item>
         <item row="1" column="0">
-         <widget class="QLabel" name="lblGim">
+         <widget class="QLabel" name="lblGimState">
           <property name="text">
-           <string>Gim : OFF</string>
+           <string>Gimbal: --</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -123,12 +148,18 @@
           <property name="text">
            <string>LED: OFF</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
          </widget>
         </item>
         <item row="1" column="2">
          <widget class="QLabel" name="lblCamState">
           <property name="text">
            <string>Camera: Disconnected</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
