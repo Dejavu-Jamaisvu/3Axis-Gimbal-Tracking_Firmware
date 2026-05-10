@@ -11,7 +11,7 @@
 #define LCD_CS_PIN      GPIO_PIN_4
 
 #define LCD_DC_PORT     GPIOA
-#define LCD_DC_PIN      GPIO_PIN_8
+#define LCD_DC_PIN      GPIO_PIN_8    // LCD 의 DC/RS
 
 #define LCD_RST_PORT    GPIOA
 #define LCD_RST_PIN     GPIO_PIN_9

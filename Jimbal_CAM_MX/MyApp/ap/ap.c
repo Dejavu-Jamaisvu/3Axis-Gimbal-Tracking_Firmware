@@ -9,10 +9,11 @@
 #define CAM_HEIGHT  120
 #define LCD_WIDTH   240
 #define LCD_HEIGHT  320
-#define VIDEO_SIZE  (CAM_WIDTH * CAM_HEIGHT * 2)  
-#define PACKET_SIZE (2 + VIDEO_SIZE + 5 + 2)      
+#define VIDEO_SIZE  (CAM_WIDTH * CAM_HEIGHT * 2)
+#define PACKET_SIZE (2 + VIDEO_SIZE + 5 + 2) // 총 38,409 바이트
 
 extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi1;
 
 // 1. 핑퐁 버퍼 선언 (A와 B 두 개의 그릇)
 uint8_t spi_buf_A[PACKET_SIZE];
@@ -27,6 +28,13 @@ volatile bool dma_done = false;
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     if (hspi->Instance == SPI2) {
         dma_done = true;
+    }
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+    if (hspi->Instance == SPI1) {
+        // 화면 전송이 완전히 끝났으므로 CS 핀을 닫아줍니다 (HIGH)
+        HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET); 
     }
 }
 
@@ -76,7 +84,7 @@ void apMain(void) {
         return; 
     }
 
-    // 화면 그리기 (뒤에서는 이미 다음 프레임이 수신되고 있음!)
+    // 화면 그리기 (시작위치 화면상 40,100)
     LCD_DrawImage(40, 100, CAM_WIDTH, CAM_HEIGHT, &draw_buf[2]);
 
     // 여기서부터 좌표 추출 (변수 생성)
@@ -88,8 +96,6 @@ void apMain(void) {
     // ✅ 변수가 다 만들어졌으니 이제 전송합니다!
     uartSendTrackData(cx, cy, detected);
 
-
-    
     if (detected) {
         // 영상이 시작되는 (40, 100) 좌표에 타겟 좌표(cx, cy)를 더하고,
         // 20x20 크기 네모의 중앙을 맞추기 위해 절반인 10을 빼줍니다.

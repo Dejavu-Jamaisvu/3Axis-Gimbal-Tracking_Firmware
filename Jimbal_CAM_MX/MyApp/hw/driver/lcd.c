@@ -1,5 +1,6 @@
 #include "lcd.h"
 #include "spi.h"
+#include "stm32f4xx_hal_spi.h"
 
 extern SPI_HandleTypeDef hspi1;
 
@@ -181,7 +182,6 @@ void LCD_DrawImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *data
     LCD_SetWindow(x, y, x + w - 1, y + h - 1);  // CS LOW 상태 반환
 
     _dc_data();
-    HAL_SPI_Transmit(&hspi1, data, (uint32_t)w * h * 2, 2000);
+    HAL_SPI_Transmit_DMA(&hspi1, data, (uint32_t)w * h * 2);
 
-    _cs_high();
 }
