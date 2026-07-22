@@ -24,7 +24,7 @@ bool uartInit(void) {
 void uartSendTrackData(int cx, int cy, bool detected) {
     uint8_t packet[7];
     packet[0] = 0x02;                    // STX
-    packet[1] = (cx >> 8) & 0xFF;        // CX High
+    packet[1] = (cx >> 8) & 0xFF;        // CX High MSB먼저 보내기
     packet[2] =  cx & 0xFF;              // CX Low
     packet[3] = (cy >> 8) & 0xFF;        // CY High
     packet[4] =  cy & 0xFF;              // CY Low

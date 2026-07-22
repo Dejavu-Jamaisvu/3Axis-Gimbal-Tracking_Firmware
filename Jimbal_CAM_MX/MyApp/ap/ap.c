@@ -25,16 +25,30 @@ uint8_t *draw_buf = spi_buf_B; // 출력용(STM32 -> LCD) 그릇
 
 volatile bool dma_done = false;
 
+// 진동벨(세마포어) 변수
+osSemaphoreId_t spi1_sem = NULL;
+
+// --------------------------------------------------
+// [입력 고속도로] 카메라 데이터 수신 완료 알람 (SPI2)
+// --------------------------------------------------
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
     if (hspi->Instance == SPI2) {
-        dma_done = true;
+        dma_done = true; 
     }
 }
 
+// --------------------------------------------------
+// [출력 고속도로] LCD 화면 그리기 완료 알람 (SPI1)
+// --------------------------------------------------
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
     if (hspi->Instance == SPI1) {
         // 화면 전송이 완전히 끝났으므로 CS 핀을 닫아줍니다 (HIGH)
         HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET); 
+
+        // ✅ 진동벨은 화면 다 그렸을 때 여기서 울려야 합니다!
+        if (spi1_sem != NULL) {
+            osSemaphoreRelease(spi1_sem); 
+        }
     }
 }
 
@@ -42,6 +56,10 @@ void apInit(void) {
     LCD_Init();
     LCD_FillScreen(BLACK);
     uartInit();
+
+    // 진동벨 생성
+    spi1_sem = osSemaphoreNew(1, 0, NULL);
+
     printf("SPI Slave !\r\n");
 
     // 첫 수신 시작 (rx_buf인 A 그릇에 받기 시작)
@@ -84,7 +102,7 @@ void apMain(void) {
         return; 
     }
 
-    // 화면 그리기 (시작위치 화면상 40,100)
+    // 화면 그리기 (시작위치 화면상 40,100) -> DMA 백그라운드 전송 시작
     LCD_DrawImage(40, 100, CAM_WIDTH, CAM_HEIGHT, &draw_buf[2]);
 
     // 여기서부터 좌표 추출 (변수 생성)
@@ -96,22 +114,25 @@ void apMain(void) {
     // ✅ 변수가 다 만들어졌으니 이제 전송합니다!
     uartSendTrackData(cx, cy, detected);
 
-    if (detected) {
-        // 영상이 시작되는 (40, 100) 좌표에 타겟 좌표(cx, cy)를 더하고,
-        // 20x20 크기 네모의 중앙을 맞추기 위해 절반인 10을 빼줍니다.
-        int16_t targetX = 40 + cx - 10;
-        int16_t targetY = 100 + cy - 10;
+    // ✅ 진동벨이 울릴 때까지 대기 (화면 그리기 끝날 때까지)
+    if (osSemaphoreAcquire(spi1_sem, 50) == osOK) {
+        
+        // 진동벨이 울렸음 (화면 전송 무사히 완료!) -> 네모 그리기 시작
+        if (detected) {
+            int16_t targetX = 40 + cx - 10;
+            int16_t targetY = 100 + cy - 10;
 
-        // 네모가 영상 영역(40~200, 100~220) 밖으로 삐져나가지 않도록 가두기
-        if (targetX < 40) targetX = 40;
-        if (targetY < 100) targetY = 100;
-        if (targetX > 40 + CAM_WIDTH  - 20) targetX = 40 + CAM_WIDTH  - 20;
-        if (targetY > 100 + CAM_HEIGHT - 20) targetY = 100 + CAM_HEIGHT - 20;
+            if (targetX < 40) targetX = 40;
+            if (targetY < 100) targetY = 100;
+            if (targetX > 40 + CAM_WIDTH  - 20) targetX = 40 + CAM_WIDTH  - 20;
+            if (targetY > 100 + CAM_HEIGHT - 20) targetY = 100 + CAM_HEIGHT - 20;
 
-        // 속이 꽉 찬 Rect, 까만색 지우기 싹 없애고, 
-        // 깔끔하게 빨간색 테두리(두께 2픽셀)만 딱 한 번 그립니다!
-        LCD_DrawHollowRect(targetX, targetY, 20, 20, 2, RED);
+            LCD_DrawHollowRect(targetX, targetY, 20, 20, 2, RED);
+        }
+    } else {
+        // 50ms가 지나도 진동벨이 안 울림 (통신 꼬임 등 에러 발생 시 비상 탈출)
+        printf("[ERROR] LCD 화면 그리기 시간 초과!!\r\n");
+        HAL_SPI_Abort(&hspi1);
+        HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
     }
-    
-    printf("OK! detected: %s X: %d, Y: %d\r\n", detected ? "true" : "false", cx, cy);
 }
